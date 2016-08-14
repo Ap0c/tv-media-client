@@ -1,11 +1,43 @@
 // ----- Setup ----- //
 
 let main = document.getElementsByTagName('main')[0];
+const MEDIA_SOURCE = 'http://media';
+
+
+// ----- Models ----- //
+
+let moviesDB = new PouchDB('movies');
+let showsDB = new PouchDB('shows');
+let episodesDB = new PouchDB('episodes');
+
+// Resets the models, then fills with media metadata.
+function populateModels (mediaData) {
+
+	return Promise.all([
+		moviesDB.destroy(),
+		showsDB.destroy(),
+		episodesDB.destroy()
+	]).then(function () {
+		moviesDB = new PouchDB('movies');
+		showsDB = new PouchDB('shows');
+		episodesDB = new PouchDB('episodes');
+	}).then(() => {
+
+		return Promise.all([
+			moviesDB.bulkDocs(mediaData.movies),
+			showsDB.bulkDocs(mediaData.shows),
+			episodesDB.bulkDocs(mediaData.episodes)
+		]);
+
+	});
+
+}
 
 
 // ----- Components ----- //
 
-let menu = {
+// The main menu.
+let mainMenu = {
 
 	view: function (ctrl) {
 
@@ -18,15 +50,16 @@ let menu = {
 
 };
 
+// A list of the movies.
 let movies = {
 
 	view: function (ctrl) {
-		console.log('here');
 		return 'Here are some movies...';
 	}
 
 };
 
+// A list of the tv shows.
 let tvShows = {
 
 	view: function (ctrl) {
@@ -38,10 +71,22 @@ let tvShows = {
 
 // ----- Routing ----- //
 
-m.route.mode = 'pathname';
+// Sets up routing.
+function startRouting () {
 
-m.route(main, '/', {
-	'/': menu,
-	'/movies': movies,
-	'/tv_shows': tvShows
-});
+	m.route.mode = 'pathname';
+
+	m.route(main, '/', {
+		'/': mainMenu,
+		'/movies': movies,
+		'/tv_shows': tvShows
+	});
+
+}
+
+
+// ----- Start ----- //
+
+m.request({ method: 'GET', url: `${MEDIA_SOURCE}/media_info` })
+	.then(populateModels)
+	.then(startRouting);
