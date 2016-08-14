@@ -1,43 +1,65 @@
 // ----- Setup ----- //
 
-let main = document.getElementsByTagName('main')[0];
+const main = document.getElementsByTagName('main')[0];
 const MEDIA_SOURCE = 'http://media';
 
 
 // ----- Models ----- //
 
-let moviesDB = new PouchDB('movies');
-let showsDB = new PouchDB('shows');
-let episodesDB = new PouchDB('episodes');
+const db = (function DB () {
 
-// Resets the models, then fills with media metadata.
-function populateModels (mediaData) {
+	let moviesDB = new PouchDB('movies');
+	let showsDB = new PouchDB('shows');
+	let episodesDB = new PouchDB('episodes');
 
-	return Promise.all([
-		moviesDB.destroy(),
-		showsDB.destroy(),
-		episodesDB.destroy()
-	]).then(function () {
-		moviesDB = new PouchDB('movies');
-		showsDB = new PouchDB('shows');
-		episodesDB = new PouchDB('episodes');
-	}).then(() => {
+	// Resets the models, then fills with media metadata.
+	function populate (mediaData) {
 
 		return Promise.all([
-			moviesDB.bulkDocs(mediaData.movies),
-			showsDB.bulkDocs(mediaData.shows),
-			episodesDB.bulkDocs(mediaData.episodes)
-		]);
+			moviesDB.destroy(),
+			showsDB.destroy(),
+			episodesDB.destroy()
+		]).then(function () {
+			moviesDB = new PouchDB('movies');
+			showsDB = new PouchDB('shows');
+			episodesDB = new PouchDB('episodes');
+		}).then(() => {
 
-	});
+			return Promise.all([
+				moviesDB.bulkDocs(mediaData.movies),
+				showsDB.bulkDocs(mediaData.shows),
+				episodesDB.bulkDocs(mediaData.episodes)
+			]);
 
-}
+		});
+
+	}
+
+	// Returns a list of movies.
+	function getMovies () {
+
+		return moviesDB.allDocs({ include_docs: true }).then((movies) => {
+
+			return movies.rows.map((movie) => {
+				return { name: movie.doc.name, url: movie.doc.url };
+			});
+
+		});
+
+	}
+
+	return {
+		populate: populate,
+		movies: getMovies
+	};
+
+})();
 
 
 // ----- Components ----- //
 
 // The main menu.
-let mainMenu = {
+const mainMenu = {
 
 	view: function (ctrl) {
 
@@ -51,7 +73,7 @@ let mainMenu = {
 };
 
 // A list of the movies.
-let movies = {
+const movies = {
 
 	view: function (ctrl) {
 		return 'Here are some movies...';
@@ -60,7 +82,7 @@ let movies = {
 };
 
 // A list of the tv shows.
-let tvShows = {
+const tvShows = {
 
 	view: function (ctrl) {
 		return 'Here are some tv shows...';
@@ -88,5 +110,5 @@ function startRouting () {
 // ----- Start ----- //
 
 m.request({ method: 'GET', url: `${MEDIA_SOURCE}/media_info` })
-	.then(populateModels)
+	.then(db.populate)
 	.then(startRouting);
