@@ -12,6 +12,8 @@ const db = (function DB () {
 	let showsDB = new PouchDB('shows');
 	let episodesDB = new PouchDB('episodes');
 
+	let movieList = [];
+
 	// Resets the models, then fills with media metadata.
 	function populate (mediaData) {
 
@@ -38,13 +40,17 @@ const db = (function DB () {
 	// Returns a list of movies.
 	function getMovies () {
 
-		return moviesDB.allDocs({ include_docs: true }).then((movies) => {
+		moviesDB.allDocs({ include_docs: true }).then((movies) => {
 
-			return movies.rows.map((movie) => {
+			movieList = movies.rows.map((movie) => {
 				return { name: movie.doc.name, url: movie.doc.url };
 			});
 
+			m.redraw();
+
 		});
+
+		return movieList;
 
 	}
 
@@ -75,8 +81,18 @@ const mainMenu = {
 // A list of the movies.
 const movies = {
 
+	controller: function () {
+
+		return { movies: db.movies };
+
+	},
+
 	view: function (ctrl) {
-		return 'Here are some movies...';
+
+		return m('ul', ctrl.movies().map((movie) => {
+			return m('li', movie.name);
+		}));
+
 	}
 
 };
