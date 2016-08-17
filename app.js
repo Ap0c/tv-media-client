@@ -54,9 +54,29 @@ const db = (function DB () {
 
 	}
 
+	// Returns a list of movies.
+	function getShows () {
+
+		let showList = m.prop([]);
+
+		showsDB.allDocs({ include_docs: true }).then((shows) => {
+
+			showList(shows.rows.map((show) => {
+				return { name: show.doc.name, id: show.doc.id };
+			}));
+
+			m.redraw();
+
+		});
+
+		return showList;
+
+	}
+
 	return {
 		populate: populate,
-		movies: getMovies
+		movies: getMovies,
+		shows: getShows
 	};
 
 })();
@@ -98,8 +118,16 @@ const movies = {
 // A list of the tv shows.
 const tvShows = {
 
+	controller: function () {
+		return { shows: db.shows() };
+	},
+
 	view: function (ctrl) {
-		return 'Here are some tv shows...';
+
+		return m('ul', ctrl.shows().map((show) => {
+			return m('li', show.name);
+		}));
+
 	}
 
 };
