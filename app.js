@@ -54,7 +54,7 @@ const db = (function DB () {
 
 	}
 
-	// Returns a list of movies.
+	// Returns a list of tv shows.
 	function getShows () {
 
 		let showList = m.prop([]);
@@ -73,10 +73,30 @@ const db = (function DB () {
 
 	}
 
+	// Returns a list of episodes from a given tv show.
+	function getEpisodes (showID) {
+
+		let episodeList = m.prop([]);
+
+		episodesDB.find({
+			selector: { show: showID },
+			sort: { sort: [ { season: 'desc' }, { number: 'desc' } ] }
+		}).then((episodes) => {
+
+			episodeList(episodes.docs);
+			m.redraw();
+
+		});
+
+		return episodeList;
+
+	}
+
 	return {
 		populate: populate,
 		movies: getMovies,
-		shows: getShows
+		shows: getShows,
+		episodes: getEpisodes
 	};
 
 })();
@@ -99,7 +119,7 @@ const mainMenu = {
 };
 
 // A list of the movies.
-const movies = {
+const movieComponent = {
 
 	controller: function () {
 		return { movies: db.movies() };
@@ -116,7 +136,7 @@ const movies = {
 };
 
 // A list of the tv shows.
-const tvShows = {
+const showsComponent = {
 
 	controller: function () {
 		return { shows: db.shows() };
@@ -125,7 +145,28 @@ const tvShows = {
 	view: function (ctrl) {
 
 		return m('ul', ctrl.shows().map((show) => {
-			return m('li', show.name);
+
+			return m('li', [
+				m(`a[href="/show/${show.id}"]`, { config: m.route }, show.name)
+			]);
+
+		}));
+
+	}
+
+};
+
+// A list of the episodes for a given show.
+const episodesComponent = {
+
+	controller: function () {
+		return { episodes: db.episodes(m.route.param('showID')) };
+	},
+
+	view: function (ctrl) {
+
+		return m('ul', ctrl.episodes().map((episode) => {
+			return m('li', `Season ${episode.season}, Ep ${episode.number}`);
 		}));
 
 	}
@@ -142,8 +183,9 @@ function startRouting () {
 
 	m.route(main, '/', {
 		'/': mainMenu,
-		'/movies': movies,
-		'/tv_shows': tvShows
+		'/movies': movieComponent,
+		'/tv_shows': showsComponent,
+		'/show/:showID': episodesComponent
 	});
 
 }
