@@ -8,28 +8,91 @@ const MEDIA_SOURCE = 'http://media';
 
 const db = (function DB () {
 
-	let moviesDB = new PouchDB('movies');
-	let showsDB = new PouchDB('shows');
-	let episodesDB = new PouchDB('episodes');
+	// ----- Properties ----- //
 
-	// Resets the models, then fills with media metadata.
-	function populate (mediaData) {
+	let db = null;
 
-		return Promise.all([
-			moviesDB.destroy(),
-			showsDB.destroy(),
-			episodesDB.destroy()
-		]).then(function () {
-			moviesDB = new PouchDB('movies');
-			showsDB = new PouchDB('shows');
-			episodesDB = new PouchDB('episodes');
-		}).then(() => {
+	// ----- Methods ----- //
 
-			return Promise.all([
-				moviesDB.bulkDocs(mediaData.movies),
-				showsDB.bulkDocs(mediaData.shows),
-				episodesDB.bulkDocs(mediaData.episodes)
-			]);
+	// Builds the database, sets up the schema.
+	function build () {
+
+		let schemaBuilder = lf.schema.create('media', 1);
+
+		schemaBuilder.createTable('movies')
+			.addColumn('id', lf.type.INTEGER)
+			.addColumn('name', lf.type.STRING)
+			.addColumn('url', lf.type.STRING)
+			.addPrimaryKey(['id']);
+
+		schemaBuilder.createTable('shows')
+			.addColumn('id', lf.type.INTEGER)
+			.addColumn('name', lf.type.STRING)
+			.addPrimaryKey(['id']);
+
+		schemaBuilder.createTable('episodes')
+			.addColumn('id', lf.type.INTEGER)
+			.addColumn('name', lf.type.STRING)
+			.addColumn('number', lf.type.INTEGER)
+			.addColumn('season', lf.type.INTEGER)
+			.addColumn('show', lf.type.INTEGER)
+			.addPrimaryKey(['id']);
+
+		return schemaBuilder;
+
+	}
+
+	// Sets up the database connect, saves in 'db' property.
+	function connect (schemaBuilder) {
+
+		return schemaBuilder.connect().then(function (conn) {
+			db = conn;
+		});
+
+	}
+
+	// Refreshes the dataset from the server.
+	function retrieveData () {
+
+		let movies = db.getSchema().table('movies');
+		let shows = db.getSchema().table('shows');
+		let episodes = db.getSchema().table('episodes');
+
+		let data = null;
+
+		return db.delete().from(movies).exec().then(function () {
+			return db.delete().from(shows).exec();
+		}).then(function () {
+			return db.delete().from(episodes).exec();
+		}).then(function () {
+			return fetch('/media_info');
+		}).then(function (res) {
+			return res.json();
+		}).then(function (res) {
+
+			data = res;
+
+			let rows = data.movies.map(function (movie) {
+				return movies.createRow(movie);
+			});
+
+			return db.insert().into(movies).values(rows).exec();
+
+		}).then(function () {
+
+			let rows = data.shows.map(function (show) {
+				return shows.createRow(show);
+			});
+
+			return db.insert().into(shows).values(rows).exec();
+
+		}).then(function () {
+
+			let rows = data.episodes.map(function (episode) {
+				return episodes.createRow(episode);
+			});
+
+			return db.insert().into(episodes).values(rows).exec();
 
 		});
 
@@ -39,13 +102,11 @@ const db = (function DB () {
 	function getMovies () {
 
 		let movieList = m.prop([]);
+		let table = db.getSchema().table('movies');
 
-		moviesDB.allDocs({ include_docs: true }).then((movies) => {
+		db.select(table.name, table.url).from(table).then((result) => {
 
-			movieList(movies.rows.map((movie) => {
-				return { name: movie.doc.name, url: movie.doc.url };
-			}));
-
+			movieList(result);
 			m.redraw();
 
 		});
@@ -58,13 +119,11 @@ const db = (function DB () {
 	function getShows () {
 
 		let showList = m.prop([]);
+		let table = db.getSchema().table('shows');
 
-		showsDB.allDocs({ include_docs: true }).then((shows) => {
+		db.select().from(table).then((result) => {
 
-			showList(shows.rows.map((show) => {
-				return { name: show.doc.name, id: show.doc.id };
-			}));
-
+			showList(result);
 			m.redraw();
 
 		});
@@ -77,14 +136,16 @@ const db = (function DB () {
 	function getEpisodes (showID) {
 
 		let episodeList = m.prop([]);
+		let table = db.getSchema().table('episodes');
 
-		episodesDB.find({
-			selector: { show: showID },
-			sort: { sort: [ { season: 'desc' }, { number: 'desc' } ] }
-		}).then((episodes) => {
+		db.select().from(table)
+			.where(table.show.eq(showID))
+			.orderBy(table.season)
+			.orderBy(table.number)
+			.then((result) => {
 
-			episodeList(episodes.docs);
-			m.redraw();
+				episodeList(result);
+				m.redraw();
 
 		});
 
