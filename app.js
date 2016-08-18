@@ -6,7 +6,7 @@ const MEDIA_SOURCE = 'http://media';
 
 // ----- Models ----- //
 
-const db = (function DB () {
+const database = (function DB () {
 
 	// ----- Properties ----- //
 
@@ -20,34 +20,25 @@ const db = (function DB () {
 		let schemaBuilder = lf.schema.create('media', 1);
 
 		schemaBuilder.createTable('movies')
-			.addColumn('id', lf.type.INTEGER)
-			.addColumn('name', lf.type.STRING)
-			.addColumn('url', lf.type.STRING)
+			.addColumn('id', lf.Type.INTEGER)
+			.addColumn('name', lf.Type.STRING)
+			.addColumn('url', lf.Type.STRING)
 			.addPrimaryKey(['id']);
 
 		schemaBuilder.createTable('shows')
-			.addColumn('id', lf.type.INTEGER)
-			.addColumn('name', lf.type.STRING)
+			.addColumn('id', lf.Type.INTEGER)
+			.addColumn('name', lf.Type.STRING)
 			.addPrimaryKey(['id']);
 
 		schemaBuilder.createTable('episodes')
-			.addColumn('id', lf.type.INTEGER)
-			.addColumn('name', lf.type.STRING)
-			.addColumn('number', lf.type.INTEGER)
-			.addColumn('season', lf.type.INTEGER)
-			.addColumn('show', lf.type.INTEGER)
+			.addColumn('id', lf.Type.INTEGER)
+			.addColumn('name', lf.Type.STRING)
+			.addColumn('number', lf.Type.INTEGER)
+			.addColumn('season', lf.Type.INTEGER)
+			.addColumn('show', lf.Type.INTEGER)
 			.addPrimaryKey(['id']);
 
 		return schemaBuilder;
-
-	}
-
-	// Sets up the database connect, saves in 'db' property.
-	function connect (schemaBuilder) {
-
-		return schemaBuilder.connect().then(function (conn) {
-			db = conn;
-		});
 
 	}
 
@@ -65,9 +56,7 @@ const db = (function DB () {
 		}).then(function () {
 			return db.delete().from(episodes).exec();
 		}).then(function () {
-			return fetch('/media_info');
-		}).then(function (res) {
-			return res.json();
+			return m.request({ method: 'GET', url: `${MEDIA_SOURCE}/media_info` });
 		}).then(function (res) {
 
 			data = res;
@@ -153,6 +142,17 @@ const db = (function DB () {
 
 	}
 
+	// Populates the database from the server.
+	function populate () {
+
+		let schema = build();
+
+		return schema.connect().then(function (conn) {
+			db = conn;
+		});
+
+	}
+
 	return {
 		populate: populate,
 		movies: getMovies,
@@ -183,7 +183,7 @@ const mainMenu = {
 const movieComponent = {
 
 	controller: function () {
-		return { movies: db.movies() };
+		return { movies: database.movies() };
 	},
 
 	view: function (ctrl) {
@@ -200,7 +200,7 @@ const movieComponent = {
 const showsComponent = {
 
 	controller: function () {
-		return { shows: db.shows() };
+		return { shows: database.shows() };
 	},
 
 	view: function (ctrl) {
@@ -221,7 +221,7 @@ const showsComponent = {
 const episodesComponent = {
 
 	controller: function () {
-		return { episodes: db.episodes(m.route.param('showID')) };
+		return { episodes: database.episodes(m.route.param('showID')) };
 	},
 
 	view: function (ctrl) {
@@ -254,6 +254,4 @@ function startRouting () {
 
 // ----- Start ----- //
 
-m.request({ method: 'GET', url: `${MEDIA_SOURCE}/media_info` })
-	.then(db.populate)
-	.then(startRouting);
+database.populate().then(startRouting);
