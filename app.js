@@ -36,7 +36,8 @@ const database = (function DB () {
 			.addColumn('number', lf.Type.INTEGER)
 			.addColumn('season', lf.Type.INTEGER)
 			.addColumn('show', lf.Type.INTEGER)
-			.addPrimaryKey(['id']);
+			.addPrimaryKey(['id'])
+			.addNullable(['name', 'number', 'season']);
 
 		return schemaBuilder;
 
@@ -93,7 +94,7 @@ const database = (function DB () {
 		let movieList = m.prop([]);
 		let table = db.getSchema().table('movies');
 
-		db.select(table.name, table.url).from(table).then((result) => {
+		db.select(table.name, table.url).from(table).exec().then((result) => {
 
 			movieList(result);
 			m.redraw();
@@ -110,7 +111,7 @@ const database = (function DB () {
 		let showList = m.prop([]);
 		let table = db.getSchema().table('shows');
 
-		db.select().from(table).then((result) => {
+		db.select().from(table).exec().then((result) => {
 
 			showList(result);
 			m.redraw();
@@ -131,7 +132,7 @@ const database = (function DB () {
 			.where(table.show.eq(showID))
 			.orderBy(table.season)
 			.orderBy(table.number)
-			.then((result) => {
+			.exec().then((result) => {
 
 				episodeList(result);
 				m.redraw();
@@ -148,7 +149,10 @@ const database = (function DB () {
 		let schema = build();
 
 		return schema.connect().then(function (conn) {
+
 			db = conn;
+			return retrieveData();
+
 		});
 
 	}
