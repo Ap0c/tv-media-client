@@ -79,37 +79,20 @@ const database = (function DB () {
 
 	}
 
-	// Returns a list of movies.
-	function getMovies () {
+	// Retrieves a list of all the given media in a table.
+	function mediaList (tableName) {
 
-		let movieList = m.prop([]);
-		let table = db.getSchema().table('movies');
-
-		db.select(table.name, table.url).from(table).exec().then((result) => {
-
-			movieList(result);
-			m.redraw();
-
-		});
-
-		return movieList;
-
-	}
-
-	// Returns a list of tv shows.
-	function getShows () {
-
-		let showList = m.prop([]);
-		let table = db.getSchema().table('shows');
+		let list = m.prop([]);
+		let table = db.getSchema().table(tableName);
 
 		db.select().from(table).exec().then((result) => {
 
-			showList(result);
+			list(result);
 			m.redraw();
 
 		});
 
-		return showList;
+		return list;
 
 	}
 
@@ -150,8 +133,8 @@ const database = (function DB () {
 
 	return {
 		populate: populate,
-		movies: getMovies,
-		shows: getShows,
+		movies: mediaList.bind(null, 'movies'),
+		shows: mediaList.bind(null, 'shows'),
 		episodes: getEpisodes
 	};
 
