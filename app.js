@@ -43,48 +43,39 @@ const database = (function DB () {
 
 	}
 
+	// Inserts given table into database.
+	function insertData (table, field) {
+
+		return (data) => {
+
+			// The bind circumvents awkward use of 'this' in lovefield source.
+			let rows = data[field].map(table.createRow.bind(table));
+
+			return db.insert().into(table).values(rows).exec().then(() => {
+				return data;
+			});
+
+		};
+
+	}
+
 	// Refreshes the dataset from the server.
 	function retrieveData () {
 
 		let movies = db.getSchema().table('movies');
 		let shows = db.getSchema().table('shows');
 		let episodes = db.getSchema().table('episodes');
+		let metadataUrl = `${MEDIA_SOURCE}/media_info`;
 
-		let data = null;
-
-		return db.delete().from(movies).exec().then(function () {
-			return db.delete().from(shows).exec();
-		}).then(function () {
-			return db.delete().from(episodes).exec();
-		}).then(function () {
-			return m.request({ method: 'GET', url: `${MEDIA_SOURCE}/media_info` });
-		}).then(function (res) {
-
-			data = res;
-
-			let rows = data.movies.map(function (movie) {
-				return movies.createRow(movie);
-			});
-
-			return db.insert().into(movies).values(rows).exec();
-
-		}).then(function () {
-
-			let rows = data.shows.map(function (show) {
-				return shows.createRow(show);
-			});
-
-			return db.insert().into(shows).values(rows).exec();
-
-		}).then(function () {
-
-			let rows = data.episodes.map(function (episode) {
-				return episodes.createRow(episode);
-			});
-
-			return db.insert().into(episodes).values(rows).exec();
-
-		});
+		db.createTransaction().exec([
+			db.delete().from(movies),
+			db.delete().from(shows),
+			db.delete().from(episodes)
+		]).then(() => {
+			return m.request({ method: 'GET', url: metadataUrl });
+		}).then(insertData(movies, 'movies'))
+			.then(insertData(shows, 'shows'))
+			.then(insertData(episodes, 'episodes'));
 
 	}
 
