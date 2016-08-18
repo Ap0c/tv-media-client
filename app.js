@@ -12,12 +12,12 @@ const database = (function DB () {
 
 	let db = null;
 
-	// ----- Methods ----- //
+	// ----- Functions ----- //
 
 	// Builds the database, sets up the schema.
 	function build () {
 
-		let schemaBuilder = lf.schema.create('media', 1);
+		const schemaBuilder = lf.schema.create('media', 1);
 
 		schemaBuilder.createTable('movies')
 			.addColumn('id', lf.Type.INTEGER)
@@ -49,7 +49,7 @@ const database = (function DB () {
 		return (data) => {
 
 			// The bind circumvents awkward use of 'this' in lovefield source.
-			let rows = data[field].map(table.createRow.bind(table));
+			const rows = data[field].map(table.createRow.bind(table));
 
 			return db.insert().into(table).values(rows).exec().then(() => {
 				return data;
@@ -62,10 +62,10 @@ const database = (function DB () {
 	// Refreshes the dataset from the server.
 	function retrieveData () {
 
-		let movies = db.getSchema().table('movies');
-		let shows = db.getSchema().table('shows');
-		let episodes = db.getSchema().table('episodes');
-		let metadataUrl = `${MEDIA_SOURCE}/media_info`;
+		const movies = db.getSchema().table('movies');
+		const shows = db.getSchema().table('shows');
+		const episodes = db.getSchema().table('episodes');
+		const metadataUrl = `${MEDIA_SOURCE}/media_info`;
 
 		db.createTransaction().exec([
 			db.delete().from(movies),
@@ -79,11 +79,27 @@ const database = (function DB () {
 
 	}
 
+	// ----- Methods ----- //
+
+	// Populates the database from the server.
+	function populate () {
+
+		const schema = build();
+
+		return schema.connect().then(function (conn) {
+
+			db = conn;
+			return retrieveData();
+
+		});
+
+	}
+
 	// Retrieves a list of all the given media in a table.
 	function mediaList (tableName) {
 
-		let list = m.prop([]);
-		let table = db.getSchema().table(tableName);
+		const list = m.prop([]);
+		const table = db.getSchema().table(tableName);
 
 		db.select().from(table).exec().then((result) => {
 
@@ -99,8 +115,8 @@ const database = (function DB () {
 	// Returns a list of episodes from a given tv show.
 	function getEpisodes (showID) {
 
-		let episodeList = m.prop([]);
-		let table = db.getSchema().table('episodes');
+		const episodeList = m.prop([]);
+		const table = db.getSchema().table('episodes');
 
 		db.select().from(table)
 			.where(table.show.eq(showID))
@@ -117,19 +133,7 @@ const database = (function DB () {
 
 	}
 
-	// Populates the database from the server.
-	function populate () {
-
-		let schema = build();
-
-		return schema.connect().then(function (conn) {
-
-			db = conn;
-			return retrieveData();
-
-		});
-
-	}
+	// ----- Constructor ----- //
 
 	return {
 		populate: populate,
@@ -230,6 +234,6 @@ function startRouting () {
 }
 
 
-// ----- Start ----- //
+// ----- Run ----- //
 
 database.populate().then(startRouting);
