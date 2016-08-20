@@ -144,6 +144,37 @@ const database = (function DB () {
 
 })();
 
+// Stores application state data about player.
+const playerVM = (function PlayerVM () {
+
+	// ----- Properties ----- //
+
+	let src = m.prop('');
+	let fullscreen = m.prop(false);
+
+	// ----- Methods ----- //
+
+	// Getter/setter for src.
+	function getsetSrc (source) {
+
+		if (source) {
+
+			src(`${MEDIA_SOURCE}${source}`);
+			fullscreen(true);
+
+		} else {
+			return src();
+		}
+
+	}
+
+	return {
+		src: getsetSrc,
+		fullscreen: fullscreen
+	};
+
+})();
+
 
 // ----- Components ----- //
 
@@ -171,7 +202,10 @@ const movieComponent = {
 	view: function (ctrl) {
 
 		return m('ul', ctrl.movies().map((movie) => {
-			return m('li', movie.name);
+
+			return m('li', { onclick: () => { playerVM.src(movie.url); } },
+				movie.name);
+
 		}));
 
 	}
@@ -216,6 +250,32 @@ const episodesComponent = {
 
 };
 
+// The video player.
+const playerComponent = {
+
+	fullscreen: function (element) {
+
+		console.log(element);
+
+		if (playerVM.fullscreen()) {
+
+			element.webkitRequestFullscreen();
+			element.play();
+
+		}
+
+	},
+
+	controller: function () {
+		return { vm: playerVM };
+	},
+
+	view: function (ctrl) {
+		return m('video', { src: ctrl.vm.src(), config: playerComponent.fullscreen });
+	}
+
+};
+
 
 // ----- Routing ----- //
 
@@ -237,3 +297,4 @@ function startRouting () {
 // ----- Run ----- //
 
 database.populate().then(startRouting);
+m.mount(document.getElementById('player'), playerComponent);
