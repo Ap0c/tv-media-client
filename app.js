@@ -222,10 +222,7 @@ const movieComponent = {
 
 	controller: function () {
 
-		database.movies().then((movies) => {
-			menuVM.list(movies);
-		});
-
+		database.movies().then(menuVM.list);
 		return { movies: menuVM.list };
 
 	},
@@ -248,10 +245,7 @@ const showsComponent = {
 
 	controller: function () {
 
-		database.shows().then((shows) => {
-			menuVM.list(shows);
-		});
-
+		database.shows().then(menuVM.list);
 		return { shows: menuVM.list };
 
 	},
@@ -275,10 +269,7 @@ const episodesComponent = {
 
 	controller: function () {
 
-		database.episodes(m.route.param('showID')).then((shows) => {
-			menuVM.list(shows);
-		});
-
+		database.episodes(m.route.param('showID')).then(menuVM.list);
 		return { episodes: menuVM.list };
 
 	},
