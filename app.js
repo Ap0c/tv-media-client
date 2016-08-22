@@ -142,6 +142,7 @@ const menuVM = (function MenuVM () {
 
 	// ----- Methods ----- //
 
+	// Getter/setter for menu list, to ensure redraw on changes.
 	function setgetList (newList) {
 
 		if (newList !== undefined) {
@@ -329,8 +330,8 @@ function startRouting () {
 // ----- Control Input ----- //
 
 // Spawns the cec client.
-const cec = spawn('cec-client');
-const re = /key pressed: ([a-z].*) \(/;
+// const cec = spawn('cec-client');
+// const re = /key pressed: ([a-z].*) \(/;
 
 // Updates the app based upon which key is pressed.
 function handleKey (key) {
@@ -338,12 +339,30 @@ function handleKey (key) {
 }
 
 // Retrieves and parses data from the hdmi cec input.
-cec.stdout.on('data', function parseCec (data) {
+// cec.stdout.on('data', function parseCec (data) {
 
-	let match = data.toString().match(re);
+// 	let match = data.toString().match(re);
 
-	if (match) {
-		handleKey(match[1]);
+// 	if (match) {
+// 		handleKey(match[1]);
+// 	}
+
+// });
+
+const mapping = {
+	'ArrowUp': 'up',
+	'ArrowDown': 'down',
+	'Enter': 'select',
+	'Escape': 'exit'
+};
+
+// Temporary keyboard input for development purposes.
+document.addEventListener('keydown', (event) => {
+
+	const action = mapping[event.key];
+
+	if (action) {
+		handleKey(action);
 	}
 
 });
