@@ -161,6 +161,16 @@ const menuVM = (function MenuVM () {
 
 	}
 
+	// Updates the current list item, ensures mithril redraw.
+	function updateSelection (newItem) {
+
+		m.startComputation();
+		currentItem(newItem);
+		currentUrl(list()[newItem].url);
+		m.endComputation();
+
+	}
+
 	// Moves the selection to the next item in the menu.
 	function nextItem () {
 
@@ -170,10 +180,7 @@ const menuVM = (function MenuVM () {
 			newItem = 0;
 		}
 
-		m.startComputation();
-		currentItem(newItem);
-		currentUrl(list()[newItem].url);
-		m.endComputation();
+		updateSelection(newItem);
 
 	}
 
@@ -186,10 +193,7 @@ const menuVM = (function MenuVM () {
 			newItem = list().length - 1;
 		}
 
-		m.startComputation();
-		currentItem(newItem);
-		currentUrl(list()[newItem].url);
-		m.endComputation();
+		updateSelection(newItem);
 
 	}
 
@@ -297,7 +301,10 @@ const showsComponent = {
 		return m('ul', ctrl.shows().map((show, idx) => {
 
 			return m('li', [
-				m(`a[href="/show/${show.id}"]`, { config: m.route }, show.name)
+				m(`a[href="/show/${show.id}"]`, {
+					config: m.route,
+					class: idx === menuVM.currentItem() ? 'selected' : ''
+				}, show.name)
 			]);
 
 		}));
@@ -319,7 +326,9 @@ const episodesComponent = {
 	view: function (ctrl) {
 
 		return m('ul', ctrl.episodes().map((episode, idx) => {
-			return m('li', `Season ${episode.season}, Ep ${episode.number}`);
+			return m('li', {
+				class: idx === menuVM.currentItem() ? 'selected' : ''
+			}, `Season ${episode.season}, Ep ${episode.number}`);
 		}));
 
 	}
