@@ -204,7 +204,8 @@ const menuVM = (function MenuVM () {
 		list: setgetList,
 		url: currentUrl,
 		next: nextItem,
-		previous: previousItem
+		previous: previousItem,
+		listType: m.prop('main')
 	};
 
 })();
@@ -225,8 +226,10 @@ const playerVM = (function PlayerVM () {
 
 		if (source !== undefined) {
 
+			m.startComputation();
 			src(`${MEDIA_SOURCE}${source}`);
 			fullscreen(true);
+			m.endComputation();
 
 		} else {
 			return src();
@@ -249,6 +252,10 @@ const playerVM = (function PlayerVM () {
 // The main menu.
 const mainMenu = {
 
+	controller: function () {
+		menuVM.listType('main');
+	},
+
 	view: function (ctrl) {
 
 		return [
@@ -266,6 +273,7 @@ const movieComponent = {
 	controller: function () {
 
 		database.movies().then(menuVM.list);
+		menuVM.listType('movies');
 		return { movies: menuVM.list };
 
 	},
@@ -291,7 +299,19 @@ const showsComponent = {
 
 	controller: function () {
 
-		database.shows().then(menuVM.list);
+		database.shows().then((shows) => {
+
+			menuVM.list(shows.map((show) => {
+
+				show.url = `/show/${show.id}`;
+				return show;
+
+			}));
+
+		});
+
+		menuVM.listType('shows');
+
 		return { shows: menuVM.list };
 
 	},
@@ -319,6 +339,7 @@ const episodesComponent = {
 	controller: function () {
 
 		database.episodes(m.route.param('showID')).then(menuVM.list);
+		menuVM.listType('episodes');
 		return { episodes: menuVM.list };
 
 	},
@@ -390,6 +411,16 @@ function handleKey (key) {
 		menuVM.next();
 	} else if (key === 'up') {
 		menuVM.previous();
+	} else if (key === 'select') {
+
+		const listType = menuVM.listType();
+
+		if (listType === 'movies') {
+			playerVM.src(menuVM.url());
+		} else if (listType === 'shows') {
+			m.route(menuVM.url());
+		}
+
 	}
 
 }
