@@ -1,3 +1,8 @@
+// ----- Requires ----- //
+
+const spawn = require('child_process').spawn;
+
+
 // ----- Setup ----- //
 
 const main = document.getElementsByTagName('main')[0];
@@ -151,6 +156,7 @@ const playerVM = (function PlayerVM () {
 
 	let src = m.prop('');
 	let fullscreen = m.prop(false);
+	let playing = false;
 
 	// ----- Methods ----- //
 
@@ -255,8 +261,6 @@ const playerComponent = {
 
 	fullscreen: function (element) {
 
-		console.log(element);
-
 		if (playerVM.fullscreen()) {
 
 			element.webkitRequestFullscreen();
@@ -292,6 +296,29 @@ function startRouting () {
 	});
 
 }
+
+
+// ----- Control Input ----- //
+
+// Spawns the cec client.
+const cec = spawn('cec-client');
+const re = /key pressed: ([a-z].*) \(/;
+
+// Updates the app based upon which key is pressed.
+function handleKey (key) {
+	console.log(key);
+}
+
+// Retrieves and parses data from the hdmi cec input.
+cec.stdout.on('data', function parseCec (data) {
+
+	let match = data.toString().match(re);
+
+	if (match) {
+		handleKey(match[1]);
+	}
+
+});
 
 
 // ----- Run ----- //
