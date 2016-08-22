@@ -103,38 +103,22 @@ const database = (function DB () {
 	// Retrieves a list of all the given media in a table.
 	function mediaList (tableName) {
 
-		const list = m.prop([]);
 		const table = db.getSchema().table(tableName);
 
-		db.select().from(table).exec().then((result) => {
-
-			list(result);
-			m.redraw();
-
-		});
-
-		return list;
+		return db.select().from(table).exec();
 
 	}
 
 	// Returns a list of episodes from a given tv show.
 	function getEpisodes (showID) {
 
-		const episodeList = m.prop([]);
 		const table = db.getSchema().table('episodes');
 
-		db.select().from(table)
+		return db.select().from(table)
 			.where(table.show.eq(showID))
 			.orderBy(table.season)
 			.orderBy(table.number)
-			.exec().then((result) => {
-
-				episodeList(result);
-				m.redraw();
-
-		});
-
-		return episodeList;
+			.exec();
 
 	}
 
@@ -149,7 +133,40 @@ const database = (function DB () {
 
 })();
 
-// Stores application state data about player.
+// Stores application state for menu lists.
+const menuVM = (function MenuVM () {
+
+	// ----- Properties ----- //
+
+	let list = m.prop([]);
+
+	// ----- Methods ----- //
+
+	function setgetList (newList) {
+
+		if (newList !== undefined) {
+
+			m.startComputation();
+			list(newList);
+			m.endComputation();
+
+		} else {
+			return list();
+		}
+
+	}
+
+	// ----- Constructor ----- //
+
+	return {
+		focus: m.prop(0),
+		list: setgetList,
+		url: m.prop('/')
+	};
+
+})();
+
+// Stores application state data for player.
 const playerVM = (function PlayerVM () {
 
 	// ----- Properties ----- //
@@ -163,7 +180,7 @@ const playerVM = (function PlayerVM () {
 	// Getter/setter for src.
 	function getsetSrc (source) {
 
-		if (source) {
+		if (source !== undefined) {
 
 			src(`${MEDIA_SOURCE}${source}`);
 			fullscreen(true);
@@ -173,6 +190,8 @@ const playerVM = (function PlayerVM () {
 		}
 
 	}
+
+	// ----- Constructor ----- //
 
 	return {
 		src: getsetSrc,
@@ -202,12 +221,18 @@ const mainMenu = {
 const movieComponent = {
 
 	controller: function () {
-		return { movies: database.movies() };
+
+		database.movies().then((movies) => {
+			menuVM.list(movies);
+		});
+
+		return { movies: menuVM.list };
+
 	},
 
 	view: function (ctrl) {
 
-		return m('ul', ctrl.movies().map((movie) => {
+		return m('ul', ctrl.movies().map((movie, idx) => {
 
 			return m('li', { onclick: () => { playerVM.src(movie.url); } },
 				movie.name);
@@ -222,12 +247,18 @@ const movieComponent = {
 const showsComponent = {
 
 	controller: function () {
-		return { shows: database.shows() };
+
+		database.shows().then((shows) => {
+			menuVM.list(shows);
+		});
+
+		return { shows: menuVM.list };
+
 	},
 
 	view: function (ctrl) {
 
-		return m('ul', ctrl.shows().map((show) => {
+		return m('ul', ctrl.shows().map((show, idx) => {
 
 			return m('li', [
 				m(`a[href="/show/${show.id}"]`, { config: m.route }, show.name)
@@ -243,12 +274,18 @@ const showsComponent = {
 const episodesComponent = {
 
 	controller: function () {
-		return { episodes: database.episodes(m.route.param('showID')) };
+
+		database.episodes(m.route.param('showID')).then((shows) => {
+			menuVM.list(shows);
+		});
+
+		return { episodes: menuVM.list };
+
 	},
 
 	view: function (ctrl) {
 
-		return m('ul', ctrl.episodes().map((episode) => {
+		return m('ul', ctrl.episodes().map((episode, idx) => {
 			return m('li', `Season ${episode.season}, Ep ${episode.number}`);
 		}));
 
