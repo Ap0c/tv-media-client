@@ -170,8 +170,10 @@ const menuVM = (function MenuVM () {
 			newItem = 0;
 		}
 
+		m.startComputation();
 		currentItem(newItem);
 		currentUrl(list()[newItem].url);
+		m.endComputation();
 
 	}
 
@@ -184,8 +186,10 @@ const menuVM = (function MenuVM () {
 			newItem = list().length - 1;
 		}
 
+		m.startComputation();
 		currentItem(newItem);
 		currentUrl(list()[newItem].url);
+		m.endComputation();
 
 	}
 
@@ -266,8 +270,11 @@ const movieComponent = {
 
 		return m('ul', ctrl.movies().map((movie, idx) => {
 
-			return m('li', { onclick: () => { playerVM.src(movie.url); } },
-				movie.name);
+			return m('li', {
+				onclick: () => { playerVM.src(movie.url); },
+				class: idx === menuVM.currentItem() ? 'selected' : ''
+			},
+			movie.name);
 
 		}));
 
