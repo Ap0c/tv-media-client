@@ -139,6 +139,8 @@ const menuVM = (function MenuVM () {
 	// ----- Properties ----- //
 
 	let list = m.prop([]);
+	let currentItem = m.prop(0);
+	let currentUrl = m.prop('/');
 
 	// ----- Methods ----- //
 
@@ -149,6 +151,8 @@ const menuVM = (function MenuVM () {
 
 			m.startComputation();
 			list(newList);
+			currentItem(0);
+			currentUrl(newList[0].url);
 			m.endComputation();
 
 		} else {
@@ -157,12 +161,42 @@ const menuVM = (function MenuVM () {
 
 	}
 
+	// Moves the selection to the next item in the menu.
+	function nextItem () {
+
+		let newItem = currentItem() + 1;
+
+		if (newItem === list().length) {
+			newItem = 0;
+		}
+
+		currentItem(newItem);
+		currentUrl(list()[newItem].url);
+
+	}
+
+	// Moves the selection to the previous item in the menu.
+	function previousItem () {
+
+		let newItem = currentItem() - 1;
+
+		if (newItem < 0) {
+			newItem = list().length - 1;
+		}
+
+		currentItem(newItem);
+		currentUrl(list()[newItem].url);
+
+	}
+
 	// ----- Constructor ----- //
 
 	return {
-		focus: m.prop(0),
+		currentItem: currentItem,
 		list: setgetList,
-		url: m.prop('/')
+		url: currentUrl,
+		next: nextItem,
+		previous: previousItem
 	};
 
 })();
@@ -335,7 +369,13 @@ function startRouting () {
 
 // Updates the app based upon which key is pressed.
 function handleKey (key) {
-	console.log(key);
+
+	if (key === 'down') {
+		menuVM.next();
+	} else if (key === 'up') {
+		menuVM.previous();
+	}
+
 }
 
 // Retrieves and parses data from the hdmi cec input.
