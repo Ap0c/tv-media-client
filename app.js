@@ -1,6 +1,7 @@
 // ----- Requires ----- //
 
 const spawn = require('child_process').spawn;
+const ipc = require('electron').ipcRenderer;
 
 
 // ----- Setup ----- //
@@ -403,10 +404,14 @@ const episodesComponent = {
 // The video player.
 const playerComponent = {
 
+	videoElement: null,
+
 	playState: function (element) {
 
+		playerComponent.videoElement = element;
+
 		if (playerVM.fullscreen()) {
-			element.webkitRequestFullscreen();
+			ipc.send('request-fullscreen');
 		} else if (document.fullscreenElement) {
 			document.exitFullscreen();
 		}

@@ -1,6 +1,7 @@
 // ----- Requires ----- //
 
 const {app, BrowserWindow} = require('electron');
+const ipc = require('electron').ipcMain;
 
 
 // ----- Setup ----- //
@@ -18,6 +19,13 @@ function createWindow () {
 
 	win.on('closed', () => {
 		win = null;
+	});
+
+	ipc.on('request-fullscreen', () => {
+
+		const cmd = 'playerComponent.videoElement.webkitRequestFullscreen()';
+		win.webContents.executeJavaScript(cmd, true);
+
 	});
 
 }
