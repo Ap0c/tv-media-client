@@ -258,6 +258,15 @@ function listItem (text, itemNumber) {
 
 }
 
+// A menu list.
+function listView (list, textField) {
+
+	return m('ul', list().map((item, idx) => {
+		return listItem(item[textField], idx);
+	}));
+
+}
+
 // The main menu.
 const mainMenu = {
 
@@ -274,11 +283,7 @@ const mainMenu = {
 	},
 
 	view: function (ctrl) {
-
-		return m('ul', ctrl.menu().map((item, idx) => {
-			return listItem(item.text, idx);
-		}));
-
+		return listView(ctrl.menu, 'text');
 	}
 
 };
@@ -296,11 +301,7 @@ const movieComponent = {
 	},
 
 	view: function (ctrl) {
-
-		return m('ul', ctrl.movies().map((movie, idx) => {
-			return listItem(movie.name, idx);
-		}));
-
+		return listView(ctrl.movies, 'name');
 	}
 
 };
@@ -328,11 +329,7 @@ const showsComponent = {
 	},
 
 	view: function (ctrl) {
-
-		return m('ul', ctrl.shows().map((show, idx) => {
-			return listItem(show.name, idx);
-		}));
-
+		return listView(ctrl.shows, 'name');
 	}
 
 };
@@ -353,7 +350,6 @@ const episodesComponent = {
 		return m('ul', ctrl.episodes().map((ep, idx) => {
 
 			let name = ep.name ? `, ${ep.name}` : '';
-
 			return listItem(`Season ${ep.season}, Ep ${ep.number}${name}`, idx);
 
 		}));
