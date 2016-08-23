@@ -249,6 +249,15 @@ const playerVM = (function PlayerVM () {
 
 // ----- Components ----- //
 
+// An item in a menu list.
+function listItem (text, itemNumber) {
+
+	return m('li', {
+		class: itemNumber === menuVM.currentItem() ? 'selected' : ''
+	}, text);
+
+}
+
 // The main menu.
 const mainMenu = {
 
@@ -267,11 +276,7 @@ const mainMenu = {
 	view: function (ctrl) {
 
 		return m('ul', ctrl.menu().map((item, idx) => {
-
-			return m('li', {
-				class: idx === menuVM.currentItem() ? 'selected' : ''
-			}, item.text);
-
+			return listItem(item.text, idx);
 		}));
 
 	}
@@ -285,6 +290,7 @@ const movieComponent = {
 
 		database.movies().then(menuVM.list);
 		menuVM.listType('movies');
+
 		return { movies: menuVM.list };
 
 	},
@@ -292,13 +298,7 @@ const movieComponent = {
 	view: function (ctrl) {
 
 		return m('ul', ctrl.movies().map((movie, idx) => {
-
-			return m('li', {
-				onclick: () => { playerVM.src(movie.url); },
-				class: idx === menuVM.currentItem() ? 'selected' : ''
-			},
-			movie.name);
-
+			return listItem(movie.name, idx);
 		}));
 
 	}
@@ -330,14 +330,7 @@ const showsComponent = {
 	view: function (ctrl) {
 
 		return m('ul', ctrl.shows().map((show, idx) => {
-
-			return m('li', [
-				m(`a[href="/show/${show.id}"]`, {
-					config: m.route,
-					class: idx === menuVM.currentItem() ? 'selected' : ''
-				}, show.name)
-			]);
-
+			return listItem(show.name, idx);
 		}));
 
 	}
@@ -357,17 +350,11 @@ const episodesComponent = {
 
 	view: function (ctrl) {
 
-		return m('ul', ctrl.episodes().map((episode, idx) => {
+		return m('ul', ctrl.episodes().map((ep, idx) => {
 
-			let name = '';
+			let name = ep.name ? `, ${ep.name}` : '';
 
-			if (episode.name) {
-				name = `, ${episode.name}`;
-			}
-
-			return m('li', {
-				class: idx === menuVM.currentItem() ? 'selected' : ''
-			}, `Season ${episode.season}, Ep ${episode.number}${name}`);
+			return listItem(`Season ${ep.season}, Ep ${ep.number}${name}`, idx);
 
 		}));
 
@@ -394,7 +381,12 @@ const playerComponent = {
 	},
 
 	view: function (ctrl) {
-		return m('video', { src: ctrl.vm.src(), config: playerComponent.fullscreen });
+
+		return m('video', {
+			src: ctrl.vm.src(),
+			config: playerComponent.fullscreen
+		});
+
 	}
 
 };
