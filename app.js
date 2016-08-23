@@ -253,15 +253,26 @@ const playerVM = (function PlayerVM () {
 const mainMenu = {
 
 	controller: function () {
+
+		menuVM.list([
+			{ text: 'Movies', url: '/movies' },
+			{ text: 'TV Shows', url: '/tv_shows' }
+		]);
+
 		menuVM.listType('main');
+		return { menu: menuVM.list };
+
 	},
 
 	view: function (ctrl) {
 
-		return [
-			m('a[href="/movies"]', { config: m.route }, 'Movies'),
-			m('a[href="/tv_shows"]', { config: m.route }, 'TV Shows')
-		];
+		return m('ul', ctrl.menu().map((item, idx) => {
+
+			return m('li', {
+				class: idx === menuVM.currentItem() ? 'selected' : ''
+			}, item.text);
+
+		}));
 
 	}
 
@@ -423,9 +434,9 @@ function handleKey (key) {
 
 		const listType = menuVM.listType();
 
-		if (listType === 'movies') {
+		if (listType === 'movies' || listType === 'episodes') {
 			playerVM.src(menuVM.url());
-		} else if (listType === 'shows') {
+		} else if (listType === 'shows' || listType === 'main') {
 			m.route(menuVM.url());
 		}
 
