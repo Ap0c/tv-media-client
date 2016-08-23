@@ -2,6 +2,7 @@
 
 const spawn = require('child_process').spawn;
 const ipc = require('electron').ipcRenderer;
+const Omx = require('node-omxplayer');
 
 
 // ----- Setup ----- //
@@ -460,11 +461,13 @@ function startRouting () {
 // ----- Control Input ----- //
 
 // Spawns the cec client.
-// const cec = spawn('cec-client');
-// const re = /key pressed: ([a-z].*) \(/;
+const cec = spawn('cec-client');
+const re = /key pressed: ([a-z].*) \(/;
 
 // Updates the app based upon which key is pressed.
 function handleKey (key) {
+
+	console.log(key);
 
 	if (key === 'down') {
 		menuVM.next();
@@ -475,54 +478,34 @@ function handleKey (key) {
 		const listType = menuVM.listType();
 
 		if (listType === 'movies' || listType === 'episodes') {
-			playerVM.src(menuVM.url());
+			player.newSource(`${MEDIA_SOURCE}${menuVM.url()}`, 'hdmi');
 		} else if (listType === 'shows' || listType === 'main') {
 			m.route(menuVM.url());
 		}
 
 	} else if (key === 'exit') {
 
-		if (playerVM.fullscreen()) {
-			playerVM.fullscreen(false);
+		if (player.running) {
+			player.quit();
 		} else {
 			window.history.back();
 		}
 
 	} else if (key === 'play') {
-		playerVM.playing(true);
+		player.play();
 	} else if (key === 'pause') {
-		playerVM.playing(false);
+		player.pause();
 	}
 
 }
 
 // Retrieves and parses data from the hdmi cec input.
-// cec.stdout.on('data', function parseCec (data) {
+cec.stdout.on('data', function parseCec (data) {
 
-// 	let match = data.toString().match(re);
+	let match = data.toString().match(re);
 
-// 	if (match) {
-// 		handleKey(match[1]);
-// 	}
-
-// });
-
-const mapping = {
-	'w': 'up',
-	's': 'down',
-	'Enter': 'select',
-	'Escape': 'exit',
-	'p': 'play',
-	'o': 'pause'
-};
-
-// Temporary keyboard input for development purposes.
-document.addEventListener('keydown', (event) => {
-
-	const action = mapping[event.key];
-
-	if (action) {
-		handleKey(action);
+	if (match) {
+		handleKey(match[1]);
 	}
 
 });
@@ -532,3 +515,4 @@ document.addEventListener('keydown', (event) => {
 
 database.populate().then(startRouting);
 m.mount(document.getElementById('player'), playerComponent);
+const player = Omx();

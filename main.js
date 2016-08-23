@@ -14,8 +14,10 @@ let win = null;
 // Creates browser window displaying main page.
 function createWindow () {
 
-	win = new BrowserWindow({ width: 800, height: 600 });
+	win = new BrowserWindow({ width: 1200, height: 800 });
 	win.loadURL(`file://${__dirname}/index.html`);
+
+	win.webContents.openDevTools();
 
 	win.on('closed', () => {
 		win = null;
