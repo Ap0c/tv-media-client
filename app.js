@@ -347,9 +347,17 @@ const episodesComponent = {
 	view: function (ctrl) {
 
 		return m('ul', ctrl.episodes().map((episode, idx) => {
+
+			let name = '';
+
+			if (episode.name) {
+				name = `, ${episode.name}`;
+			}
+
 			return m('li', {
 				class: idx === menuVM.currentItem() ? 'selected' : ''
-			}, `Season ${episode.season}, Ep ${episode.number}`);
+			}, `Season ${episode.season}, Ep ${episode.number}${name}`);
+
 		}));
 
 	}
@@ -421,6 +429,8 @@ function handleKey (key) {
 			m.route(menuVM.url());
 		}
 
+	} else if (key === 'exit') {
+		window.history.back();
 	}
 
 }
