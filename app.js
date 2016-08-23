@@ -221,7 +221,7 @@ const playerVM = (function PlayerVM () {
 
 	// ----- Methods ----- //
 
-	// Getter/setter for src.
+	// Getter/setter for src, ensures mithril update.
 	function getsetSrc (source) {
 
 		if (source !== undefined) {
@@ -229,6 +229,7 @@ const playerVM = (function PlayerVM () {
 			m.startComputation();
 			src(`${MEDIA_SOURCE}${source}`);
 			fullscreen(true);
+			playing(true);
 			m.endComputation();
 
 		} else {
@@ -237,7 +238,7 @@ const playerVM = (function PlayerVM () {
 
 	}
 
-	// Getter/setter for src, ensures mithril update.
+	// Getter/setter for playing, ensures mithril update.
 	function getsetPlaying (playStatus) {
 
 		if (playStatus !== undefined) {
@@ -252,11 +253,27 @@ const playerVM = (function PlayerVM () {
 
 	}
 
+	// Getter/setter for fullscreen, ensures mithril update.
+	function getsetFullscreen (fullscreenStatus) {
+
+		if (fullscreenStatus !== undefined) {
+
+			m.startComputation();
+			fullscreen(fullscreenStatus);
+			playing(fullscreenStatus);
+			m.endComputation();
+
+		} else {
+			return fullscreen();
+		}
+
+	}
+
 	// ----- Constructor ----- //
 
 	return {
 		src: getsetSrc,
-		fullscreen: fullscreen,
+		fullscreen: getsetFullscreen,
 		playing: getsetPlaying
 	};
 
@@ -379,8 +396,10 @@ const playerComponent = {
 
 	playState: function (element) {
 
-		if (playerVM.fullscreen() && !document.fullscreenElement) {
+		if (playerVM.fullscreen()) {
 			element.webkitRequestFullscreen();
+		} else if (document.fullscreenElement) {
+			document.exitFullscreen();
 		}
 
 		if (element.paused && playerVM.playing()) {
@@ -448,7 +467,13 @@ function handleKey (key) {
 		}
 
 	} else if (key === 'exit') {
-		window.history.back();
+
+		if (playerVM.fullscreen()) {
+			playerVM.fullscreen(false);
+		} else {
+			window.history.back();
+		}
+
 	} else if (key === 'play') {
 		playerVM.playing(true);
 	} else if (key === 'pause') {
