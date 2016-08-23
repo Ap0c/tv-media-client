@@ -9,6 +9,7 @@ const Omx = require('node-omxplayer');
 
 const main = document.getElementsByTagName('main')[0];
 const MEDIA_SOURCE = 'http://media';
+const player = Omx();
 
 
 // ----- Models ----- //
@@ -212,75 +213,6 @@ const menuVM = (function MenuVM () {
 
 })();
 
-// Stores application state data for player.
-const playerVM = (function PlayerVM () {
-
-	// ----- Properties ----- //
-
-	let src = m.prop('');
-	let fullscreen = m.prop(false);
-	let playing = m.prop(false);
-
-	// ----- Methods ----- //
-
-	// Getter/setter for src, ensures mithril update.
-	function getsetSrc (source) {
-
-		if (source !== undefined) {
-
-			m.startComputation();
-			src(`${MEDIA_SOURCE}${source}`);
-			fullscreen(true);
-			playing(true);
-			m.endComputation();
-
-		} else {
-			return src();
-		}
-
-	}
-
-	// Getter/setter for playing, ensures mithril update.
-	function getsetPlaying (playStatus) {
-
-		if (playStatus !== undefined) {
-
-			m.startComputation();
-			playing(playStatus);
-			m.endComputation();
-
-		} else {
-			return playing();
-		}
-
-	}
-
-	// Getter/setter for fullscreen, ensures mithril update.
-	function getsetFullscreen (fullscreenStatus) {
-
-		if (fullscreenStatus !== undefined) {
-
-			m.startComputation();
-			fullscreen(fullscreenStatus);
-			playing(fullscreenStatus);
-			m.endComputation();
-
-		} else {
-			return fullscreen();
-		}
-
-	}
-
-	// ----- Constructor ----- //
-
-	return {
-		src: getsetSrc,
-		fullscreen: getsetFullscreen,
-		playing: getsetPlaying
-	};
-
-})();
-
 
 // ----- Components ----- //
 
@@ -402,44 +334,6 @@ const episodesComponent = {
 
 };
 
-// The video player.
-const playerComponent = {
-
-	videoElement: null,
-
-	playState: function (element) {
-
-		playerComponent.videoElement = element;
-
-		if (playerVM.fullscreen()) {
-			ipc.send('request-fullscreen');
-		} else if (document.fullscreenElement) {
-			document.exitFullscreen();
-		}
-
-		if (element.paused && playerVM.playing()) {
-			element.play();
-		} else if (!element.paused && !playerVM.playing()) {
-			element.pause();
-		}
-
-	},
-
-	controller: function () {
-		return { vm: playerVM };
-	},
-
-	view: function (ctrl) {
-
-		return m('video', {
-			src: ctrl.vm.src(),
-			config: playerComponent.playState
-		});
-
-	}
-
-};
-
 
 // ----- Routing ----- //
 
@@ -466,8 +360,6 @@ const re = /key pressed: ([a-z].*) \(/;
 
 // Updates the app based upon which key is pressed.
 function handleKey (key) {
-
-	console.log(key);
 
 	if (key === 'down') {
 		menuVM.next();
@@ -514,5 +406,3 @@ cec.stdout.on('data', function parseCec (data) {
 // ----- Run ----- //
 
 database.populate().then(startRouting);
-m.mount(document.getElementById('player'), playerComponent);
-const player = Omx();
