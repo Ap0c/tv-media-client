@@ -217,7 +217,7 @@ const playerVM = (function PlayerVM () {
 
 	let src = m.prop('');
 	let fullscreen = m.prop(false);
-	let playing = false;
+	let playing = m.prop(false);
 
 	// ----- Methods ----- //
 
@@ -237,11 +237,27 @@ const playerVM = (function PlayerVM () {
 
 	}
 
+	// Getter/setter for src, ensures mithril update.
+	function getsetPlaying (playStatus) {
+
+		if (playStatus !== undefined) {
+
+			m.startComputation();
+			playing(playStatus);
+			m.endComputation();
+
+		} else {
+			return playing();
+		}
+
+	}
+
 	// ----- Constructor ----- //
 
 	return {
 		src: getsetSrc,
-		fullscreen: fullscreen
+		fullscreen: fullscreen,
+		playing: getsetPlaying
 	};
 
 })();
@@ -361,13 +377,16 @@ const episodesComponent = {
 // The video player.
 const playerComponent = {
 
-	fullscreen: function (element) {
+	playState: function (element) {
 
-		if (playerVM.fullscreen()) {
-
+		if (playerVM.fullscreen() && !document.fullscreenElement) {
 			element.webkitRequestFullscreen();
-			element.play();
+		}
 
+		if (element.paused && playerVM.playing()) {
+			element.play();
+		} else if (!element.paused && !playerVM.playing()) {
+			element.pause();
 		}
 
 	},
@@ -380,7 +399,7 @@ const playerComponent = {
 
 		return m('video', {
 			src: ctrl.vm.src(),
-			config: playerComponent.fullscreen
+			config: playerComponent.playState
 		});
 
 	}
@@ -430,6 +449,10 @@ function handleKey (key) {
 
 	} else if (key === 'exit') {
 		window.history.back();
+	} else if (key === 'play') {
+		playerVM.playing(true);
+	} else if (key === 'pause') {
+		playerVM.playing(false);
 	}
 
 }
@@ -449,7 +472,9 @@ const mapping = {
 	'ArrowUp': 'up',
 	'ArrowDown': 'down',
 	'Enter': 'select',
-	'Escape': 'exit'
+	'Escape': 'exit',
+	'p': 'play',
+	'o': 'pause'
 };
 
 // Temporary keyboard input for development purposes.
