@@ -356,7 +356,7 @@ function startRouting () {
 
 // Spawns the cec client.
 const cec = spawn('cec-client');
-const re = /key pressed: ([a-z].*) \(/;
+const re = /key pressed: (.*) \(/;
 
 // Updates the app based upon which key is pressed.
 function handleKey (key) {
@@ -387,6 +387,14 @@ function handleKey (key) {
 		player.play();
 	} else if (key === 'pause') {
 		player.pause();
+	} else if (key === 'Fast forward') {
+		player.fwd30();
+	} else if (key === 'rewind') {
+		player.back30();
+	} else if (key === 'forward') {
+		player.fwd600();
+	} else if (key === 'backward') {
+		player.back600();
 	}
 
 }
