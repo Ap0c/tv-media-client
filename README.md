@@ -1,6 +1,6 @@
 # TV Media
 
-An electron app for playing back media, stored on a networked server, on the TV. Built with electron, and designed to work with [this](https://github.com/Ap0c/video-server) video server, and run on the Raspberry Pi (2 and above).
+An electron app for playing back media, stored on a networked server, on the TV. Designed to work with [this](https://github.com/Ap0c/video-server) video server, and run on the Raspberry Pi (2 and above).
 
 ## To Run
 
