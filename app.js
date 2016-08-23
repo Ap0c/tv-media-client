@@ -282,12 +282,21 @@ const playerVM = (function PlayerVM () {
 
 // ----- Components ----- //
 
+// Makes sure the current element is always visible.
+function align (listItem) {
+	listItem.scrollIntoView();
+}
+
 // An item in a menu list.
 function listItem (text, itemNumber) {
 
-	return m('li', {
-		class: itemNumber === menuVM.currentItem() ? 'selected' : ''
-	}, text);
+	let options = {};
+
+	if (itemNumber === menuVM.currentItem()) {
+		options = { config: align, class: 'selected' };
+	}
+
+	return m('li', options, text);
 
 }
 
@@ -494,8 +503,8 @@ function handleKey (key) {
 // });
 
 const mapping = {
-	'ArrowUp': 'up',
-	'ArrowDown': 'down',
+	'w': 'up',
+	's': 'down',
 	'Enter': 'select',
 	'Escape': 'exit',
 	'p': 'play',
